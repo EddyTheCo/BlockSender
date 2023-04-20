@@ -2,8 +2,7 @@
 
 #include<QObject>
 #include<QString>
-#include<QByteArray>
-#include<QJsonArray>
+
 #include<QtQml/qqmlregistration.h>
 #include"qaddr_bundle.hpp"
 
@@ -19,7 +18,6 @@ class BlockSender : public QObject
 
 public:
     BlockSender(QObject *parent = nullptr):QObject(parent){};
-
 
     Q_INVOKABLE void addOutput(std::shared_ptr<qblocks::Output> out){the_outputs_.push_back(out);}
     Q_INVOKABLE void addBundle(qiota::AddressBundle bundle,quint16 reference=0)

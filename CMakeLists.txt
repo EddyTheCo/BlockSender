@@ -14,7 +14,6 @@ qt6_add_qml_module(blockSender
     RESOURCE_PREFIX
    "/esterVtech.com/imports"
     OUTPUT_TARGETS out_targets_var
-    NO_IMPORT_SCAN
     IMPORTS nodeConection
     IMPORT_PATH
     ${CMAKE_BINARY_DIR}/_deps/nodeconection-build
