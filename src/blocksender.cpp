@@ -1,23 +1,22 @@
 #include"blocksender.hpp"
-
-#include"QJsonDocument"
-#include"QJsonObject"
 #include"nodeConnection.hpp"
 
 using namespace qiota;
 
 void BlockSender::send(void)
 {
+
     if(the_outputs_.size())
     {
         auto  info=Node_Conection::rest_client->get_api_core_v2_info();
         QObject::connect(info,&Node_info::finished,this,[=]( ){
-            info->deleteLater();
+
             quint64 outtotal=0;
             for(const auto& v: the_outputs_)
             {
-                outtotal+=Client::get_deposit(v,info);
+                outtotal+=v->amount_;
             }
+
             c_array Commitments;
             std::vector<std::shared_ptr<Input>> the_inputs_;
             quint64 intotal=0;
@@ -61,7 +60,7 @@ void BlockSender::send(void)
                     emit notEnoughFunds(outtotal-intotal);
                 }
             }
-
+            info->deleteLater();
         });
 
 
