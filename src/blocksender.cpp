@@ -14,6 +14,10 @@ void BlockSender::send(void)
             quint64 outtotal=0;
             for(const auto& v: the_outputs_)
             {
+                if(v->amount_<Client::get_deposit(v,info))
+                {
+                    v->amount_=Client::get_deposit(v,info);
+                }
                 outtotal+=v->amount_;
             }
 
