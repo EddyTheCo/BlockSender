@@ -9,38 +9,47 @@ void BlockSender::send(void)
     if(the_outputs_.size())
     {
         auto  info=Node_Conection::rest_client->get_api_core_v2_info();
+        auto outsvar=the_outputs_;
+        auto bundvar=the_bundles_;
+
+        the_outputs_.clear();
+        the_bundles_.clear();
         QObject::connect(info,&Node_info::finished,this,[=]( ){
 
+            auto bund=bundvar;
+            pvector<const Output> c_outputs;
             quint64 outtotal=0;
-            for(const auto& v: the_outputs_)
+            for(const auto& v: outsvar)
             {
                 if(v->amount_<Client::get_deposit(v,info))
                 {
                     v->amount_=Client::get_deposit(v,info);
                 }
+
                 outtotal+=v->amount_;
+                c_outputs.push_back(std::const_pointer_cast<Output>(v));
             }
 
             c_array Commitments;
-            std::vector<std::shared_ptr<Input>> the_inputs_;
+            pvector<const Input> the_inputs_;
             quint64 intotal=0;
-            for(const auto& v: the_bundles_)
+            for(const auto& v: bund)
             {
-                the_outputs_.insert(the_outputs_.end(),v.first.ret_outputs.begin(),v.first.ret_outputs.end());
+                c_outputs.insert(c_outputs.end(),v.first.ret_outputs.begin(),v.first.ret_outputs.end());
                 the_inputs_.insert(the_inputs_.end(),v.first.inputs.begin(),v.first.inputs.end());
                 Commitments+=v.first.Inputs_hash;
                 intotal+=v.first.amount;
             }
-            if(outtotal==intotal)
+
+            if(outtotal==intotal&&outtotal>0)
             {
                 auto Inputs_Commitment=Block::get_inputs_Commitment(Commitments);
 
-                auto essence=std::shared_ptr<qblocks::Essence>
-                        (new Transaction_Essence(info->network_id_,the_inputs_,Inputs_Commitment,the_outputs_));
+                auto essence=Essence::Transaction(info->network_id_,the_inputs_,Inputs_Commitment,c_outputs);
 
-                std::vector<std::shared_ptr<Unlock>> the_unlocks;
+                pvector<const Unlock> the_unlocks;
 
-                for(auto& v: the_bundles_)
+                for(auto& v: bund)
                 {
                     if(v.first.get_address()->type()==Address::Ed25519_typ)
                     {
@@ -53,8 +62,23 @@ void BlockSender::send(void)
                     the_unlocks.insert(the_unlocks.end(),v.first.unlocks.begin(),v.first.unlocks.end());
                 }
 
-                auto trpay=std::shared_ptr<qblocks::Payload>(new Transaction_Payload(essence,the_unlocks));
+                auto trpay=Payload::Transaction(essence,the_unlocks);
+
                 auto block_=Block(trpay);
+
+                QJsonObject outdata;
+
+                outdata.insert("transactionId",trpay->get_id().toHexString());
+                QJsonArray outids;
+                for(quint16 i=0;i<outsvar.size();i++)
+                {
+                    auto v=trpay->get_id();
+                    v.append(i);
+                    outids.push_back(v.toHexString());
+
+                }
+                outdata.insert("outIds",outids);
+                emit sent(outdata);
                 Node_Conection::rest_client->send_block(block_);
             }
             else
@@ -65,6 +89,7 @@ void BlockSender::send(void)
                 }
             }
             info->deleteLater();
+
         });
 
 
