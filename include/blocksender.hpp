@@ -4,8 +4,7 @@
 #include<QString>
 
 #include<QtQml/qqmlregistration.h>
-#include"qaddr_bundle.hpp"
-
+#include"account.hpp"
 
 
 using namespace qiota::qblocks;

@@ -35,13 +35,14 @@ FetchContent_Declare(
 FetchContent_MakeAvailable(nodeConection)
 
 FetchContent_Declare(
-    qaddr_bundle
-    GIT_REPOSITORY git@github.com:EddyTheCo/QAddrBundle.git
+    account
+    GIT_REPOSITORY git@github.com:EddyTheCo/account.git
     GIT_TAG main
 )
-FetchContent_MakeAvailable(qaddr_bundle)
+FetchContent_MakeAvailable(account)
 
-target_link_libraries(blockSender PUBLIC qaddr_bundle nodeConection)
+
+target_link_libraries(blockSender PUBLIC  nodeConection account)
 
 target_compile_definitions(blockSender
     PRIVATE $<$<OR:$<CONFIG:Debug>,$<CONFIG:RelWithDebInfo>>:QT_QML_DEBUG>)
