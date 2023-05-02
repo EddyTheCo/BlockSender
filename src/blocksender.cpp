@@ -51,7 +51,7 @@ void BlockSender::send(void)
 
                 if(outtotal<intotal)
                 {
-                    auto addr_bundle=Account::get_addr({0,0,0});
+                    const auto addr_bundle=Account::get_addr({0,0,0});
                     const auto eddAddr=addr_bundle.get_address();
                     const auto addUnlcon=Unlock_Condition::Address(eddAddr);
                     auto BaOut=Output::Basic(intotal-outtotal,{addUnlcon});
@@ -59,41 +59,6 @@ void BlockSender::send(void)
                     if(intotal-outtotal>=Client::get_deposit(BaOut,info))
                     {
                         c_outputs.push_back(BaOut);
-                        auto essence=Essence::Transaction(info->network_id_,the_inputs_,Inputs_Commitment,c_outputs);
-
-                        pvector<const Unlock> the_unlocks;
-
-                        for(auto& v: bund)
-                        {
-                            if(v.first.get_address()->type()==Address::Ed25519_typ)
-                            {
-                                v.first.create_unlocks(essence->get_hash());
-                            }
-                            else
-                            {
-                                v.first.create_unlocks(essence->get_hash(),v.second);
-                            }
-                            the_unlocks.insert(the_unlocks.end(),v.first.unlocks.begin(),v.first.unlocks.end());
-                        }
-
-                        auto trpay=Payload::Transaction(essence,the_unlocks);
-
-                        auto block_=Block(trpay);
-
-                        QJsonObject outdata;
-
-                        outdata.insert("transactionId",trpay->get_id().toHexString());
-                        QJsonArray outids;
-                        for(quint16 i=0;i<outsvar.size();i++)
-                        {
-                            auto v=trpay->get_id();
-                            v.append(i);
-                            outids.push_back(v.toHexString());
-
-                        }
-                        outdata.insert("outIds",outids);
-                        emit sent(outdata);
-                        Node_Conection::rest_client->send_block(block_);
                     }
                     else
                     {
@@ -101,6 +66,43 @@ void BlockSender::send(void)
                     }
 
                 }
+                auto essence=Essence::Transaction(info->network_id_,the_inputs_,Inputs_Commitment,c_outputs);
+
+                pvector<const Unlock> the_unlocks;
+
+                for(auto& v: bund)
+                {
+                    if(v.first.get_address()->type()==Address::Ed25519_typ)
+                    {
+                        v.first.create_unlocks(essence->get_hash());
+                    }
+                    else
+                    {
+                        v.first.create_unlocks(essence->get_hash(),v.second);
+                    }
+                    the_unlocks.insert(the_unlocks.end(),v.first.unlocks.begin(),v.first.unlocks.end());
+                }
+
+                c_array serializedEssence;
+                serializedEssence.from_object<Essence>(*essence);
+
+                auto trpay=Payload::Transaction(essence,the_unlocks);
+
+                auto block_=Block(trpay);
+
+                QJsonObject outdata;
+
+                outdata.insert("transactionId",trpay->get_id().toHexString());
+                QJsonArray outids;
+                for(quint16 i=0;i<outsvar.size();i++)
+                {
+                    auto v=trpay->get_id();
+                    v.append(i);
+                    outids.push_back(v.toHexString());
+                }
+                outdata.insert("outIds",outids);
+                emit sent(outdata);
+                Node_Conection::rest_client->send_block(block_);
 
 
             }
